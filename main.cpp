@@ -40,7 +40,7 @@ uint8_t userKey[16] = {0x0f, 0x15, 0x71, 0xc9,
                        0xaf, 0x7f, 0x67, 0x98};
 uint64_t *userKey64 = (uint64_t *)userKey;
 
-uint8_t temp[16];
+uint8_t state[16];
 
 uint8_t  keyExtended[176];
 uint64_t *keyExtended64 = (uint64_t *)keyExtended;
@@ -48,7 +48,7 @@ uint32_t *keyExtended32 = (uint32_t *)keyExtended;
 
 uint32_t T[4][256];
 
-uint8_t *ptNow = temp;
+uint8_t *ptNow = state;
 uint32_t *ptNow32 = (uint32_t *)ptNow;
 uint64_t *ptNow64 = (uint64_t *)ptNow;
 uint8_t *ptPre = text;
@@ -86,12 +86,15 @@ void InitTable() {
 }
 
 inline uint32_t g(uint32_t word, int round) {
-    uint8_t *pt = (uint8_t *) &word;
-    uint8_t foo = pt[0];
-    pt[0] = SBOX[pt[1]] ^ RCON[round - 1];
-    pt[1] = SBOX[pt[2]];
-    pt[2] = SBOX[pt[3]];
-    pt[3] = SBOX[foo];
+    uint8_t byte[4];
+    byte[0] = (uint8_t) word;
+    byte[1] = (uint8_t) (word >> 8);
+    byte[2] = (uint8_t) (word >> 16);
+    byte[3] = (uint8_t) (word >> 24);
+    word = (uint32_t) (SBOX[byte[1]] ^ RCON[round - 1]) |
+           (uint32_t) SBOX[byte[2]] << 8 |
+           (uint32_t) SBOX[byte[3]] << 16 |
+           (uint32_t) SBOX[byte[0]] << 24;
     return word;
 }
 
@@ -118,35 +121,22 @@ inline void addRoundKey2(int round) {
 }
 
 inline void lastTransform() {
-    text[0] =  SBOX[temp[0]];
-    text[1] =  SBOX[temp[5]];
-    text[2] =  SBOX[temp[10]];
-    text[3] =  SBOX[temp[15]];
-    text[4] =  SBOX[temp[4]];
-    text[5] =  SBOX[temp[9]];
-    text[6] =  SBOX[temp[14]];
-    text[7] =  SBOX[temp[3]];
-    text[8] =  SBOX[temp[8]];
-    text[9] =  SBOX[temp[13]];
-    text[10] = SBOX[temp[2]];
-    text[11] = SBOX[temp[7]];
-    text[12] = SBOX[temp[12]];
-    text[13] = SBOX[temp[1]];
-    text[14] = SBOX[temp[6]];
-    text[15] = SBOX[temp[11]];
-}
-//将*x的第j位置1
-inline void set(uint16_t *x, int j) {
-//    *x = *x |mask[j];
-}
-
-inline void lastTransform2() {
-    uint16_t x[8]= {0};
-    for (int i = 0; i < 8; ++i) {
-        for (int j = 0; j < 16; ++j) {
-            if ((temp[j] << i)%2 == 1) set(&x[i], j);
-        }
-    }
+    text[0] =  SBOX[state[0]];
+    text[1] =  SBOX[state[5]];
+    text[2] =  SBOX[state[10]];
+    text[3] =  SBOX[state[15]];
+    text[4] =  SBOX[state[4]];
+    text[5] =  SBOX[state[9]];
+    text[6] =  SBOX[state[14]];
+    text[7] =  SBOX[state[3]];
+    text[8] =  SBOX[state[8]];
+    text[9] =  SBOX[state[13]];
+    text[10] = SBOX[state[2]];
+    text[11] = SBOX[state[7]];
+    text[12] = SBOX[state[12]];
+    text[13] = SBOX[state[1]];
+    text[14] = SBOX[state[6]];
+    text[15] = SBOX[state[11]];
 }
 
 inline void unionTransform() {
