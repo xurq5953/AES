@@ -52,6 +52,8 @@ uint8_t *ptNow = state;
 uint32_t *ptNow32 = (uint32_t *)ptNow;
 uint64_t *ptNow64 = (uint64_t *)ptNow;
 uint8_t *ptPre = text;
+
+
 //FUNCTION
 
 
@@ -109,56 +111,41 @@ void keyExpansion() {
     }
 }
 
-inline void addRoundKey(int round) {
-    text64[0] ^= keyExtended64[round*2+0];
-    text64[1] ^= keyExtended64[round*2+1];
-}
-
-inline void addRoundKey2(int round) {
-    ptNow64 = (uint64_t *)ptNow;
-    ptNow64[0] ^= keyExtended64[round*2+0];
-    ptNow64[1] ^= keyExtended64[round*2+1];
-}
 
 inline void lastTransform() {
-    text[0] =  SBOX[state[0]];
-    text[1] =  SBOX[state[5]];
-    text[2] =  SBOX[state[10]];
-    text[3] =  SBOX[state[15]];
-    text[4] =  SBOX[state[4]];
-    text[5] =  SBOX[state[9]];
-    text[6] =  SBOX[state[14]];
-    text[7] =  SBOX[state[3]];
-    text[8] =  SBOX[state[8]];
-    text[9] =  SBOX[state[13]];
-    text[10] = SBOX[state[2]];
-    text[11] = SBOX[state[7]];
-    text[12] = SBOX[state[12]];
-    text[13] = SBOX[state[1]];
-    text[14] = SBOX[state[6]];
-    text[15] = SBOX[state[11]];
+    text[0] =  SBOX[state[0]] ^keyExtended[160];
+    text[1] =  SBOX[state[5]] ^keyExtended[161];
+    text[2] =  SBOX[state[10]]^keyExtended[162];
+    text[3] =  SBOX[state[15]]^keyExtended[163];
+    text[4] =  SBOX[state[4]] ^keyExtended[164];
+    text[5] =  SBOX[state[9]] ^keyExtended[165];
+    text[6] =  SBOX[state[14]]^keyExtended[166];
+    text[7] =  SBOX[state[3]] ^keyExtended[167];
+    text[8] =  SBOX[state[8]] ^keyExtended[168];
+    text[9] =  SBOX[state[13]]^keyExtended[169];
+    text[10] = SBOX[state[2]] ^keyExtended[170];
+    text[11] = SBOX[state[7]] ^keyExtended[171];
+    text[12] = SBOX[state[12]]^keyExtended[172];
+    text[13] = SBOX[state[1]] ^keyExtended[173];
+    text[14] = SBOX[state[6]] ^keyExtended[174];
+    text[15] = SBOX[state[11]]^keyExtended[175];
 }
 
-inline void unionTransform() {
-    ptNow32 = (uint32_t *)ptNow;
-    ptNow32[0] = T[0][ptPre[0]] ^ T[1][ptPre[5]] ^ T[2][ptPre[10]] ^T[3][ptPre[15]];
-    ptNow32[1] = T[0][ptPre[4]] ^ T[1][ptPre[9]] ^ T[2][ptPre[14]] ^T[3][ptPre[3]];
-    ptNow32[2] = T[0][ptPre[8]] ^ T[1][ptPre[13]] ^T[2][ptPre[2]] ^ T[3][ptPre[7]];
-    ptNow32[3] = T[0][ptPre[12]] ^T[1][ptPre[1]] ^ T[2][ptPre[6]] ^ T[3][ptPre[11]];
-}
 
 void Encrypt() {
     uint8_t *foo;
-    addRoundKey(0);
+    text64[0] ^= keyExtended64[0];
+    text64[1] ^= keyExtended64[1];
     for (int round = 1; round < 10; ++round) {
-        unionTransform();
-        addRoundKey2(round);
-        foo = ptNow;
-        ptNow = ptPre;
+        ptNow32[0] = T[0][ptPre[0]] ^ T[1][ptPre[5]] ^ T[2][ptPre[10]] ^T[3][ptPre[15]]^ keyExtended32[round*4+0];
+        ptNow32[1] = T[0][ptPre[4]] ^ T[1][ptPre[9]] ^ T[2][ptPre[14]] ^T[3][ptPre[3]] ^ keyExtended32[round*4+1];
+        ptNow32[2] = T[0][ptPre[8]] ^ T[1][ptPre[13]] ^T[2][ptPre[2]] ^ T[3][ptPre[7]] ^ keyExtended32[round*4+2];
+        ptNow32[3] = T[0][ptPre[12]] ^T[1][ptPre[1]] ^ T[2][ptPre[6]] ^ T[3][ptPre[11]]^ keyExtended32[round*4+3];
+        foo =(uint8_t *) ptNow32;
+        ptNow32 = (uint32_t *)ptPre;
         ptPre = foo;
     }
     lastTransform();
-    addRoundKey(10);
 }
 
 //Test
